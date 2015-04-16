@@ -14,4 +14,19 @@
 #
 ######################################################################
 
+# Make subsequent instance meta-data calls shorter
+$instMetaRoot = 'http://169.254.169.254/latest/'
+
+# Make sure AWS cmdlets are available
+Import-Module "C:\Program Files (x86)\AWS Tools\PowerShell\AWSPowerShell\AWSPowerShell.psd1"
+
+# Capture instance identy "document" data
+$docStruct = Invoke-RestMethod -Uri $instMetaRoot/dynamic/instance-identity/document/
+
+# Extract info from $docStruct
+$instRegion = $docStruct.region
+$instId = $docStruct.instanceId
+
+# Set AWS region fo subsequent AWS cmdlets
+Set-DefaultAWSRegion -Region $instRegion
 
