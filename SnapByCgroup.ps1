@@ -40,15 +40,14 @@ $instId = $docStruct.instanceId
 # Set AWS region fo subsequent AWS cmdlets
 Set-DefaultAWSRegion -Region $instRegion
 
-# Get-EC2Volume -Filter @{ Name="attachment.instance-id"; Values="$instId", Name="tag:Consistency Group"; Values="$congrp" }
+# Grab all volumes owned by instance and are part of selected consistency group
 $VolumeStruct = Get-EC2Volume -Filter @(
-                 @{ Name="attachment.instance-id"; Values="$instId" },
-                 @{ Name="tag:Consistency Group"; Values="$congrp" }
-              )
+                   @{ Name="attachment.instance-id"; Values="$instId" },
+                   @{ Name="tag:Consistency Group"; Values="$congrp" }
+                )
 
+# Extract VolumeIDs from $VolumeStruct
 $VolumeList = $VolumeStruct.VolumeId
 
-Get-EC2Volume -Filter @(
-   @{ Name="attachment.instance-id"; Values="$instId" },
-   @{ Name="tag:Consistency Group"; Values="$congrp" }
-)
+
+Write-Host $VolumeList
