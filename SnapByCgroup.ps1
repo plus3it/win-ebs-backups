@@ -49,5 +49,16 @@ $VolumeStruct = Get-EC2Volume -Filter @(
 # Extract VolumeIDs from $VolumeStruct
 $VolumeList = $VolumeStruct.VolumeId
 
+# Create parallel jobs to run in background
+Measure-Command {
+   $VolsToSnap = $VolumeList
+   ForEach ( $EBSvol in $VolsToSnap ) {
+      Write-Host $EBSvol
+      Start-Job -Name $EBSvol -ScriptBlock {
+         Get-EC2Volume -VolumeId $EBSvol 
+      }  -Argument $EBSvol
+   }  
+   Get-Job | Wait-Job | Out-Null
+}  
+Get-Job | Remove-Job
 
-Write-Host $VolumeList
