@@ -5,6 +5,8 @@ $VolList = @(
    "vol-49816459"
 )
 
+$BkupName = "CLItest"
+
 # $JobList = @()
 # 
 # foreach ($VolName in $VolList) {
@@ -32,11 +34,14 @@ Function New-EbsSnapshot {
 
    PROCESS {
       foreach ($volume_id in $VolList) {
-         # Things to do in parallel for each item in the pipeline
-         $desc = "some description"
-         # New-EC2Snapshot -VolumeId $volume_id -Description $desc
-         $VolInfo = Get-EC2Volume -VolumeId $volume_id
-         Write-Host $VolInfo.state
+         Start-Job -name $volume_id -script {
+            $SnapIdStruct = New-EC2Snapshot -VolumeId $volume_id -Description ${BkupName}
+            $SnapId = $SnapIdStruct.SnapshotId
+            New-EC2Tag -Resource $SnapId -Tag @( @{ Key="Name"; Value="${BkupName}" }, `
+               @{ Key="AltName"; Value="Test-Tage ${BkupName}" } )
+            Start-Sleep -seconds 5
+         }
+         Write-Host $SnapId
       }
    }
 
