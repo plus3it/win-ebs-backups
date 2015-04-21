@@ -34,15 +34,11 @@ Function New-EbsSnapshot {
 
    PROCESS {
       foreach ($volume_id in $VolList) {
-         New-EC2Snapshot -VolumeId $volume_id -Description ${BkupName}
-#          Start-Job -name $volume_id -script {
-#             $SnapIdStruct = New-EC2Snapshot -VolumeId $volume_id -Description ${BkupName}
-#             $SnapId = $SnapIdStruct.SnapshotId
-#             New-EC2Tag -Resource $SnapId -Tag @( @{ Key="Name"; Value="${BkupName}" }, `
-#                @{ Key="AltName"; Value="Test-Tage ${BkupName}" } )
-#             Start-Sleep -seconds 5
-#          }
-#          Write-Host $SnapId
+         $SnapStruct = New-EC2Snapshot -VolumeId $volume_id -Description ${BkupName}
+         $SnapId = $SnapStruct.SnapshotId
+         New-EC2Tag -Resource $SnapId -Tag @( @{ Key="Name"; Value="${BkupName}" }, `
+            @{ Key="AltName"; Value="Test-Tage ${BkupName}" } )
+         Write-Host $SnapId
       }
    }
 
