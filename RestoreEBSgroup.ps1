@@ -120,6 +120,9 @@ function ComputeFreeSlots {
 #      SriovNetSupport                   Property   string SriovNetSupport {get;set;}
 #      UserData                          Property   string UserData {get;set;}
 
+$TESTVAR = Get-EC2instanceAttribute -Instance $instId -Attribute blockDeviceMapping
+write-host ( $TESTVAR.BlockDeviceMappings | Select -ExpandProperty BlockDeviceMappings)
+
 }
 
 ComputeFreeSlots 
