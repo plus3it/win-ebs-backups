@@ -49,6 +49,8 @@ $instId = $docStruct.instanceId
 # Set AWS region fo subsequent AWS cmdlets
 Set-DefaultAWSRegion $instRegion
 
+
+##########
 # Get list of snspshots matching "Name"
 function GetSnapList {
    $SnapStruct =`Get-EC2Snapshot -Filter @(
@@ -68,9 +70,40 @@ function GetSnapList {
 
 }
 
+
+##########
+function SnapToEBS() {
+
+# CONVERT FROM UNIX SHELL...
+#    for SNAPID in ${RESTORELST}
+#    do
+#       MultiLog "Creating EBS from snapshot \"${SNAPID}\"... "
+#       NEWEBS=$(aws ec2 create-volume --output=text --snapshot-id ${SNAPID} \
+#                --volume-type standard --availability-zone ${INSTANCEAZ} \
+#                --query VolumeId)
+# 
+#       if [ "${NEWEBS}" = "" ]
+#       then
+#          throw "EBS-creation failed!"
+#          # Add a meaningful name to the EBS if creation succeeds
+#       else
+#          aws ec2 create-tags --resource ${NEWEBS} --tags \
+#          "Key=Name,Value=Restore of ${SNAPNAME}"
+#          VOLLIST[${COUNT}]=${NEWEBS}
+#          local COUNT=$((${COUNT} + 1))
+#       fi
+#    done
+
+}
+
+
+
+##########
+# Take list of Amazon-recommended attachment-points and
+# remove already-used attachment-points.
 function ComputeFreeSlots {
 
-   # List of possible instance storage-attachment points
+   # A list of possible instance storage-attachment points
    $AllDiskSlots = [System.Collections.Generic.List[System.String]](
       "/dev/sda1",
       "xvdf",
@@ -114,8 +147,12 @@ function ComputeFreeSlots {
 
    $AvailDiskSlots = $AllDiskSlots
 
-   Write-Host $AvailDiskSlots
+}
 
+
+##########
+# Bind recovery-EBSes to available attachment-points
+function EBStoSlot {
 }
 
 GetSnapList
