@@ -44,11 +44,14 @@ $docStruct = Invoke-RestMethod -Uri ${instMetaRoot}/dynamic/instance-identity/do
 
 # Extract info from $docStruct
 $instRegion = $docStruct.region
+$instAZ = $docStruct.availabilityZone
 $instId = $docStruct.instanceId
 
 # Set AWS region fo subsequent AWS cmdlets
 Set-DefaultAWSRegion $instRegion
 
+
+##########
 # Get list of snspshots matching "Name"
 function GetSnapList {
    $SnapStruct =`Get-EC2Snapshot -Filter @(
@@ -56,7 +59,8 @@ function GetSnapList {
                @{ Name="tag:Snapshot Group" ; Values="$snapgrp" }
              ) 
 
-   $SnapList = $SnapStruct.SnapshotId
+   # Set 'global' for use elsewhere
+   $global:SnapList = $SnapStruct.SnapshotId
 
 
    if ( [string]::IsNullOrEmpty($SnapList) ) {
@@ -68,9 +72,50 @@ function GetSnapList {
 
 }
 
+
+##########
+# Create recovery-volumes from snapshots
+function SnapToEBS {
+   GetSnapList
+
+#   $EBSlist = [System.Collections.Generic.List[System.String]]()
+  [System.Collections.Generic.List[System.String]]$EBSlist = ''
+
+   # Iterate snapshot group
+   foreach($SnapShot in $SnapList) {
+      Write-Host "Attempting to create EBS from snapshot $SnapShot"
+      $RecoveryEBSstruct = New-EC2Volume -SnapshotId $SnapShot -VolumeType standard -AvailabilityZone $instAZ
+      $RecoveryEBS = $RecoveryEBSstruct.VolumeId
+
+      # Ensure we got an EBS volume-identifier
+      if ( [string]::IsNullOrEmpty($RecoveryEBS) ) {
+         throw "Failed to create recovery-EBS from $SnapShot"
+      }
+      else {
+         $EBSlist.Add("$RecoveryEBS") | out-null
+         
+         New-EC2Tag -Resource $RecoveryEBS -Tag @(
+           @{ Key="Name" ; Value="Restore of $SnapShot" }, `
+           @{ Key="Creator Instance" ; Value="$instId" }, `
+           @{ Key="Created By" ; Value="Scripted Restore Utility" }
+         )
+      }
+   }
+
+   # Log what we did
+   $EBSlist.Remove("") | Out-Null
+   Write-Host "Created recovery-EBS(es): $EBSlist" 
+
+}
+
+
+
+##########
+# Take list of Amazon-recommended attachment-points and
+# remove already-used attachment-points.
 function ComputeFreeSlots {
 
-   # List of possible instance storage-attachment points
+   # A list of possible instance storage-attachment points
    $AllDiskSlots = [System.Collections.Generic.List[System.String]](
       "/dev/sda1",
       "xvdf",
@@ -114,9 +159,13 @@ function ComputeFreeSlots {
 
    $AvailDiskSlots = $AllDiskSlots
 
-   Write-Host $AvailDiskSlots
-
 }
 
-GetSnapList
+
+##########
+# Bind recovery-EBSes to available attachment-points
+function EBStoSlot {
+}
+
+SnapToEBS
 ComputeFreeSlots 
