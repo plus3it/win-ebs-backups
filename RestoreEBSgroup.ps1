@@ -99,8 +99,9 @@ function ComputeFreeSlots {
    $BoundBDevStruct = (Get-EC2Instance -Region us-west-2 -Instance i-8558b272).Instances
    $BoundBDevList = $BoundBDevStruct.BlockDeviceMappings.DeviceName
 
-   Write-Host $BoundBDevList
+   Write-Host "Found block devs bound at: $BoundBDevList"
 
 }
 
+GetSnapList
 ComputeFreeSlots 
