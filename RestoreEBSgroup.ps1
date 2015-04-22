@@ -53,11 +53,70 @@ Set-DefaultAWSRegion $instRegion
 function GetSnapList {
    $SnapStruct =`Get-EC2Snapshot -Filter @(
                @{ Name="tag:Created By" ; Values="Automated Backup" }, `
-               @{ Name="tag:Snapshot Group" ; Values="201504220424 (i-8558b272)" }
+               @{ Name="tag:Snapshot Group" ; Values="$snapgrp" }
              ) 
 
    $SnapList = $SnapStruct.SnapshotId
-   Write-Host $SnapList
+
+
+   if ( [string]::IsNullOrEmpty($SnapList) ) {
+      throw "No matching snapshots found"
+   }
+   else {
+      "Found snapshots: " + $SnapList
+   }
+
+}
+
+function ComputeFreeSlots {
+
+   # List of possible instance storage-attachment points
+   $AllDiskSlots = [System.Collections.Generic.List[System.String]](
+      "/dev/sda1",
+      "xvdf",
+      "xvdg",
+      "xvdh",
+      "xvdi",
+      "xvdj",
+      "xvdk",
+      "xvdl",
+      "xvdm",
+      "xvdn",
+      "xvdo",
+      "xvdp",
+      "xvdq",
+      "xvdr",
+      "xvds",
+      "xvdt",
+      "xvdu",
+      "xvdv",
+      "xvdw",
+      "xvdx",
+      "xvdy",
+      "xvdz"
+   )
+
+   # Get list of currently-bound EBSes
+   $BoundBDevStruct = (Get-EC2Instance -Region us-west-2 -Instance i-8558b272).Instances
+   $BoundBDevList = $BoundBDevStruct.BlockDeviceMappings.DeviceName
+   $BoundBDevCt = $BoundBDevList.Count
+
+   Write-Host "Found block devs bound at: $BoundBDevList"
+
+   # Remove currently-bound slots from "All Slots" list
+   $LoopIndex = 0
+   while ( $LoopIndex -lt $BoundBDevCt )
+   {
+      $BoundBDevVal = $BoundBDevList[$LoopIndex]
+      $AllDiskSLots.Remove("$BoundBDevVal") | out-null
+      $LoopIndex++
+   }
+
+   $AvailDiskSlots = $AllDiskSlots
+
+   Write-Host $AvailDiskSlots
+
 }
 
 GetSnapList
+ComputeFreeSlots 
