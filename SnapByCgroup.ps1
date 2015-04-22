@@ -36,6 +36,12 @@ $docStruct = Invoke-RestMethod -Uri ${instMetaRoot}/dynamic/instance-identity/do
 $instRegion = $docStruct.region
 $instId = $docStruct.instanceId
 
+# Set basic snapshot description
+$BkupDesc = "${instId}-bkup-${DateStmp}"
+$BkupName = "AutoBack (${instId}) ${DateStmp}"
+$SnapGrpName = "${DateStmp} (${instId})"
+$CreateBy = "Automated Backup"
+
 # Set AWS region fo subsequent AWS cmdlets
 Set-DefaultAWSRegion $instRegion
 
@@ -60,10 +66,12 @@ Function New-EbsSnapshot {
       ## CHANGE TO PARALLEL IN LATER VERSIONS ##
       ##########################################
       foreach ($SrcVolId in $VolumeList) {
-         $SnapIdStruct = New-EC2Snapshot -VolumeId $SrcVolId -Description ${BkupName}
+         $SnapIdStruct = New-EC2Snapshot -VolumeId $SrcVolId -Description ${BkupDesc}
          $SnapId = $SnapIdStruct.SnapshotId
          New-EC2Tag -Resource $SnapId -Tag @( @{ Key="Name"; Value="${BkupName}" }, `
-            @{ Key="AltName"; Value="Test-Tag ${BkupName}" } )
+            @{ Key="Snapshot Group"; Value="$SnapGrpName" }, `
+            @{ Key="Created By"; Value="$CreateBy" }
+         )
 
          Write-Host $SnapId
       }
