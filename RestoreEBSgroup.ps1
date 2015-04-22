@@ -24,3 +24,24 @@
 #
 ######################################################################
 
+Commandline arguments parsing
+Param (
+   [string]$congrp = $(throw "-congrp is required")
+)
+
+# Set generic variables
+$DateStmp = $(get-date -format "yyyyMMddHHmm")
+$LogDir = "C:/TEMP/EBSbackup"
+$LogFile = "${LogDir}/backup-$DateStmp.log"
+$instMetaRoot = "http://169.254.169.254/latest/"
+
+# Make sure AWS cmdlets are available
+Import-Module "C:\Program Files (x86)\AWS Tools\PowerShell\AWSPowerShell\AWSPowerShell.psd1"
+
+
+# Capture instance identy "document" data
+$docStruct = Invoke-RestMethod -Uri ${instMetaRoot}/dynamic/instance-identity/document/
+
+# Extract info from $docStruct
+$instRegion = $docStruct.region
+$instId = $docStruct.instanceId
