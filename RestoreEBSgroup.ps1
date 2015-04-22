@@ -44,6 +44,7 @@ $docStruct = Invoke-RestMethod -Uri ${instMetaRoot}/dynamic/instance-identity/do
 
 # Extract info from $docStruct
 $instRegion = $docStruct.region
+$instAZ = $docStruct.availabilityZone
 $instId = $docStruct.instanceId
 
 # Set AWS region fo subsequent AWS cmdlets
@@ -58,7 +59,8 @@ function GetSnapList {
                @{ Name="tag:Snapshot Group" ; Values="$snapgrp" }
              ) 
 
-   $SnapList = $SnapStruct.SnapshotId
+   # Set 'global' for use elsewhere
+   $global:SnapList = $SnapStruct.SnapshotId
 
 
    if ( [string]::IsNullOrEmpty($SnapList) ) {
@@ -72,27 +74,29 @@ function GetSnapList {
 
 
 ##########
-function SnapToEBS() {
+# Create recovery-volumes from snapshots
+function SnapToEBS {
+   GetSnapList
 
-# CONVERT FROM UNIX SHELL...
-#    for SNAPID in ${RESTORELST}
-#    do
-#       MultiLog "Creating EBS from snapshot \"${SNAPID}\"... "
-#       NEWEBS=$(aws ec2 create-volume --output=text --snapshot-id ${SNAPID} \
-#                --volume-type standard --availability-zone ${INSTANCEAZ} \
-#                --query VolumeId)
-# 
-#       if [ "${NEWEBS}" = "" ]
-#       then
-#          throw "EBS-creation failed!"
-#          # Add a meaningful name to the EBS if creation succeeds
-#       else
-#          aws ec2 create-tags --resource ${NEWEBS} --tags \
-#          "Key=Name,Value=Restore of ${SNAPNAME}"
-#          VOLLIST[${COUNT}]=${NEWEBS}
-#          local COUNT=$((${COUNT} + 1))
-#       fi
-#    done
+   # Iterate snapshot group
+   foreach($SnapShot in $SnapList) {
+      Write-Host "Attempting to create EBS from snapshot $SnapShot"
+      $RecoveryEBSstruct = New-EC2Volume -SnapshotId $SnapShot -VolumeType standard -AvailabilityZone $instAZ
+      $RecoveryEBS = $RecoveryEBSstruct.VolumeId
+
+      # Ensure we got an EBS volume-identifier
+      if ( [string]::IsNullOrEmpty($RecoveryEBS) ) {
+         throw "Failed to create recovery-EBS from $SnapShot"
+      }
+      else {
+         New-EC2Tag -Resource $RecoveryEBS -Tag @(
+           @{ Key="Name" ; Value="Restore of $SnapShot" }, `
+           @{ Key="Creator Instance" ; Value="$instId" }, `
+           @{ Key="Created By" ; Value="Scripted Restore Utility" }
+         )
+      }
+   }
+
 
 }
 
@@ -155,5 +159,5 @@ function ComputeFreeSlots {
 function EBStoSlot {
 }
 
-GetSnapList
+SnapToEBS
 ComputeFreeSlots 
