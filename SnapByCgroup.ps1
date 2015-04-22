@@ -29,18 +29,16 @@ $instMetaRoot = "http://169.254.169.254/latest/"
 Import-Module "C:\Program Files (x86)\AWS Tools\PowerShell\AWSPowerShell\AWSPowerShell.psd1"
 
 
-# Function to set AWS_DEFAULT_REGION
-Function SetAWSregion {
-   # Capture instance identy "document" data
-   $docStruct = Invoke-RestMethod -Uri ${instMetaRoot}/dynamic/instance-identity/document/
+# Capture instance identy "document" data
+$docStruct = Invoke-RestMethod -Uri ${instMetaRoot}/dynamic/instance-identity/document/
 
-   # Extract info from $docStruct
-   $instRegion = $docStruct.region
-   $instId = $docStruct.instanceId
+# Extract info from $docStruct
+$instRegion = $docStruct.region
+$instId = $docStruct.instanceId
 
-   # Set AWS region fo subsequent AWS cmdlets
-   Set-DefaultAWSRegion -Region $instRegion
-}
+# Set AWS region fo subsequent AWS cmdlets
+Set-DefaultAWSRegion $instRegion
+
 
 
 # Function to run Snapshots in parallel
@@ -56,16 +54,21 @@ Function New-EbsSnapshot {
    }
 
    PROCESS {
-      foreach ($volume_id in $VolList) {
-         Start-Job -name $volume_id -script {
-            $SnapIdStruct = New-EC2Snapshot -VolumeId $volume_id -Description ${BkupName}
-            $SnapId = $SnapIdStruct.SnapshotId
-            New-EC2Tag -Resource $SnapId -Tag @( @{ Key="Name"; Value="${BkupName}" }, `
-               @{ Key="AltName"; Value="Test-Tage ${BkupName}" } )
-            Start-Sleep -seconds 5
-         }
+
+      ##########################################
+      ## THIS METHOD CURRENTLY SERIAL - WILL  ##
+      ## CHANGE TO PARALLEL IN LATER VERSIONS ##
+      ##########################################
+      foreach ($SrcVolId in $VolumeList) {
+         $SnapIdStruct = New-EC2Snapshot -VolumeId $SrcVolId -Description ${BkupName}
+         $SnapId = $SnapIdStruct.SnapshotId
+         New-EC2Tag -Resource $SnapId -Tag @( @{ Key="Name"; Value="${BkupName}" }, `
+            @{ Key="AltName"; Value="Test-Tag ${BkupName}" } )
+
          Write-Host $SnapId
       }
+      ##########################################
+      ##########################################
    }
 
    END {
@@ -77,18 +80,14 @@ Function New-EbsSnapshot {
 
 # Grab all volumes owned by instance and are part of selected consistency group
 Function GetAttVolList {
-   [cmdLetBinding()]
-
    $VolumeStruct = Get-EC2Volume -Filter @(
-                   @{ Name="attachment.instance-id"; Values="$instId" },
-                   @{ Name="tag:Consistency Group"; Values="$congrp" }
-                   )
+      @{ Name="attachment.instance-id"; Values="$instId" },
+      @{ Name="tag:Consistency Group"; Values="$congrp" } )
 
    # Extract VolumeIDs from $VolumeStruct
-   $VolumeList = $VolumeStruct.VolumeId
+   $global:VolumeList = $VolumeStruct.VolumeId
 
 }
-
 
 
 GetAttVolList
