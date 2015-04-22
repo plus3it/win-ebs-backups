@@ -95,33 +95,11 @@ function ComputeFreeSlots {
       "xvdz"
    )
 
-# Use "Get-EC2instanceAttribute -Instance $instId -Attribute blockDeviceMapping" to get instance's EBS attachment-points
-#
-#      TypeName: Amazon.EC2.Model.InstanceAttribute
-#  
-#      Name                              MemberType Definition
-#      ----                              ---------- ----------
-#      Equals                            Method     bool Equals(System.Object obj)
-#      GetHashCode                       Method     int GetHashCode()
-#      GetType                           Method     type GetType()
-#      ToString                          Method     string ToString()
-#      BlockDeviceMappings               Property   System.Collections.Generic.List[Amazon.EC2.Model.InstanceBlockDeviceMapping] BlockDeviceMappings {get;set;}
-#      DisableApiTermination             Property   bool DisableApiTermination {get;set;}
-#      EbsOptimized                      Property   bool EbsOptimized {get;set;}
-#      Groups                            Property   System.Collections.Generic.List[Amazon.EC2.Model.GroupIdentifier] Groups {get;set;}
-#      InstanceId                        Property   string InstanceId {get;set;}
-#      InstanceInitiatedShutdownBehavior Property   string InstanceInitiatedShutdownBehavior {get;set;}
-#      InstanceType                      Property   string InstanceType {get;set;}
-#      KernelId                          Property   string KernelId {get;set;}
-#      ProductCodes                      Property   System.Collections.Generic.List[Amazon.EC2.Model.ProductCode] ProductCodes {get;set;}
-#      RamdiskId                         Property   string RamdiskId {get;set;}
-#      RootDeviceName                    Property   string RootDeviceName {get;set;}
-#      SourceDestCheck                   Property   bool SourceDestCheck {get;set;}
-#      SriovNetSupport                   Property   string SriovNetSupport {get;set;}
-#      UserData                          Property   string UserData {get;set;}
+   # Get list of currently-bound EBSes
+   $BoundBDevStruct = (Get-EC2Instance -Region us-west-2 -Instance i-8558b272).Instances
+   $BoundBDevList = $BoundBDevStruct.BlockDeviceMappings.DeviceName
 
-$TESTVAR = Get-EC2instanceAttribute -Instance $instId -Attribute blockDeviceMapping
-write-host ( $TESTVAR.BlockDeviceMappings | Select -ExpandProperty BlockDeviceMappings)
+   Write-Host $BoundBDevList
 
 }
 
