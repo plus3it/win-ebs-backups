@@ -45,3 +45,19 @@ $docStruct = Invoke-RestMethod -Uri ${instMetaRoot}/dynamic/instance-identity/do
 # Extract info from $docStruct
 $instRegion = $docStruct.region
 $instId = $docStruct.instanceId
+
+# Set AWS region fo subsequent AWS cmdlets
+Set-DefaultAWSRegion $instRegion
+
+# Get list of snspshots matching "Name"
+function GetSnapList {
+   $SnapStruct =`Get-EC2Snapshot -Filter @(
+               @{ Name="tag:Created By" ; Values="Automated Backup" }, `
+               @{ Name="tag:Snapshot Group" ; Values="201504220424 (i-8558b272)" }
+             ) 
+
+   $SnapList = $SnapStruct.SnapshotId
+   Write-Host $SnapList
+}
+
+GetSnapList
