@@ -78,6 +78,9 @@ function GetSnapList {
 function SnapToEBS {
    GetSnapList
 
+#   $EBSlist = [System.Collections.Generic.List[System.String]]()
+  [System.Collections.Generic.List[System.String]]$EBSlist = ''
+
    # Iterate snapshot group
    foreach($SnapShot in $SnapList) {
       Write-Host "Attempting to create EBS from snapshot $SnapShot"
@@ -89,6 +92,8 @@ function SnapToEBS {
          throw "Failed to create recovery-EBS from $SnapShot"
       }
       else {
+         $EBSlist.Add("$RecoveryEBS") | out-null
+         
          New-EC2Tag -Resource $RecoveryEBS -Tag @(
            @{ Key="Name" ; Value="Restore of $SnapShot" }, `
            @{ Key="Creator Instance" ; Value="$instId" }, `
@@ -97,6 +102,9 @@ function SnapToEBS {
       }
    }
 
+   # Log what we did
+   $EBSlist.Remove("") | Out-Null
+   Write-Host "Created recovery-EBS(es): $EBSlist" 
 
 }
 
