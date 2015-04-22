@@ -71,7 +71,8 @@ function GetSnapList {
 function ComputeFreeSlots {
 
    # List of possible instance storage-attachment points
-   $AllDiskSlots = @(
+   $AllDiskSlots = [System.Collections.Generic.List[System.String]](
+      "/dev/sda1",
       "xvdf",
       "xvdg",
       "xvdh",
@@ -98,8 +99,22 @@ function ComputeFreeSlots {
    # Get list of currently-bound EBSes
    $BoundBDevStruct = (Get-EC2Instance -Region us-west-2 -Instance i-8558b272).Instances
    $BoundBDevList = $BoundBDevStruct.BlockDeviceMappings.DeviceName
+   $BoundBDevCt = $BoundBDevList.Count
 
    Write-Host "Found block devs bound at: $BoundBDevList"
+
+   # Remove currently-bound slots from "All Slots" list
+   $LoopIndex = 0
+   while ( $LoopIndex -lt $BoundBDevCt )
+   {
+      $BoundBDevVal = $BoundBDevList[$LoopIndex]
+      $AllDiskSLots.Remove("$BoundBDevVal") | out-null
+      $LoopIndex++
+   }
+
+   $AvailDiskSlots = $AllDiskSlots
+
+   Write-Host $AvailDiskSlots
 
 }
 
