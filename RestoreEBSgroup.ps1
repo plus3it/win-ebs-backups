@@ -53,11 +53,73 @@ Set-DefaultAWSRegion $instRegion
 function GetSnapList {
    $SnapStruct =`Get-EC2Snapshot -Filter @(
                @{ Name="tag:Created By" ; Values="Automated Backup" }, `
-               @{ Name="tag:Snapshot Group" ; Values="201504220424 (i-8558b272)" }
+               @{ Name="tag:Snapshot Group" ; Values="$snapgrp" }
              ) 
 
    $SnapList = $SnapStruct.SnapshotId
-   Write-Host $SnapList
+
+
+   if ( [string]::IsNullOrEmpty($SnapList) ) {
+      throw "No matching snapshots found"
+   }
+   else {
+      "Found snapshots: " + $SnapList
+   }
+
 }
 
-GetSnapList
+function ComputeFreeSlots {
+
+   # List of possible instance storage-attachment points
+   $AllDiskSlots = @(
+      "xvdf",
+      "xvdg",
+      "xvdh",
+      "xvdi",
+      "xvdj",
+      "xvdk",
+      "xvdl",
+      "xvdm",
+      "xvdn",
+      "xvdo",
+      "xvdp",
+      "xvdq",
+      "xvdr",
+      "xvds",
+      "xvdt",
+      "xvdu",
+      "xvdv",
+      "xvdw",
+      "xvdx",
+      "xvdy",
+      "xvdz"
+   )
+
+# Use "Get-EC2instanceAttribute -Instance $instId -Attribute blockDeviceMapping" to get instance's EBS attachment-points
+#
+#      TypeName: Amazon.EC2.Model.InstanceAttribute
+#  
+#      Name                              MemberType Definition
+#      ----                              ---------- ----------
+#      Equals                            Method     bool Equals(System.Object obj)
+#      GetHashCode                       Method     int GetHashCode()
+#      GetType                           Method     type GetType()
+#      ToString                          Method     string ToString()
+#      BlockDeviceMappings               Property   System.Collections.Generic.List[Amazon.EC2.Model.InstanceBlockDeviceMapping] BlockDeviceMappings {get;set;}
+#      DisableApiTermination             Property   bool DisableApiTermination {get;set;}
+#      EbsOptimized                      Property   bool EbsOptimized {get;set;}
+#      Groups                            Property   System.Collections.Generic.List[Amazon.EC2.Model.GroupIdentifier] Groups {get;set;}
+#      InstanceId                        Property   string InstanceId {get;set;}
+#      InstanceInitiatedShutdownBehavior Property   string InstanceInitiatedShutdownBehavior {get;set;}
+#      InstanceType                      Property   string InstanceType {get;set;}
+#      KernelId                          Property   string KernelId {get;set;}
+#      ProductCodes                      Property   System.Collections.Generic.List[Amazon.EC2.Model.ProductCode] ProductCodes {get;set;}
+#      RamdiskId                         Property   string RamdiskId {get;set;}
+#      RootDeviceName                    Property   string RootDeviceName {get;set;}
+#      SourceDestCheck                   Property   bool SourceDestCheck {get;set;}
+#      SriovNetSupport                   Property   string SriovNetSupport {get;set;}
+#      UserData                          Property   string UserData {get;set;}
+
+}
+
+ComputeFreeSlots 
