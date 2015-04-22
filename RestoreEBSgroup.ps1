@@ -24,9 +24,9 @@
 #
 ######################################################################
 
-Commandline arguments parsing
+# Commandline arguments parsing
 Param (
-   [string]$congrp = $(throw "-congrp is required")
+   [string]$snapgrp = $(throw "-snapgrp is required")
 )
 
 # Set generic variables
