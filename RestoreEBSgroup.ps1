@@ -142,7 +142,7 @@ function ComputeFreeSlots {
    )
 
    # Get list of currently-bound EBSes
-   $BoundBDevStruct = (Get-EC2Instance -Region us-west-2 -Instance i-8558b272).Instances
+   $BoundBDevStruct = (Get-EC2Instance -Region us-west-2 -Instance $instId).Instances
    $BoundBDevList = $BoundBDevStruct.BlockDeviceMappings.DeviceName
    $BoundBDevCt = $BoundBDevList.Count
 
