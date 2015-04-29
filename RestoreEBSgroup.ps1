@@ -95,7 +95,7 @@ function SnapToEBS {
          $EBSlist.Add("$RecoveryEBS") | out-null
          
          New-EC2Tag -Resource $RecoveryEBS -Tag @(
-           @{ Key="Name" ; Value="Restore of $SnapShot" }, `
+           @{ Key="Name" ; Value="Restore of $snapgrp" }, `
            @{ Key="Creator Instance" ; Value="$instId" }, `
            @{ Key="Created By" ; Value="Scripted Restore Utility" }
          )
