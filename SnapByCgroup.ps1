@@ -39,7 +39,7 @@ $instId = $docStruct.instanceId
 # Set basic snapshot description
 $BkupDesc = "${instId}-bkup-${DateStmp}"
 $BkupName = "AutoBack (${instId}) ${DateStmp}"
-$SnapGrpName = "${DateStmp} (${instId})"
+$SnapGrpName = "${DateStmp} (${instId}) ${congrp}"
 $CreateBy = "Automated Backup"
 
 # Set AWS region fo subsequent AWS cmdlets
