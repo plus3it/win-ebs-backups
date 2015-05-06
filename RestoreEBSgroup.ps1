@@ -31,19 +31,6 @@ Param (
    [int]$iops = 100
 )
 
-switch ($vtype)
-   {
-      standard { $ebstype = $vtype }
-      gp2      { $ebstype = $vtype }
-      io1      {
-            $ebstype = $vtype
-            if ($iops -lt 100) {
-               $(throw "Must pass a value between 100 and 20000 - and IO-to-Volsize ratio must be less than 30")
-            }
-            
-         }
-      default  { $(throw "unsupported Volume-Type specified") }
-   }
 
 # Set generic variables
 $DateStmp = $(get-date -format "yyyyMMddHHmm")
@@ -100,11 +87,26 @@ function SnapToEBS {
    # Iterate snapshot group
    foreach($SnapShot in $SnapList) {
       Write-Host "Attempting to create EBS from snapshot $SnapShot"
-      if ($ebstype = "io1") {
-         $RecoveryEBSstruct = New-EC2Volume -SnapshotId $SnapShot -VolumeType ${ebstype} -iops $iops -AvailabilityZone $instAZ
-      } else {
-         $RecoveryEBSstruct = New-EC2Volume -SnapshotId $SnapShot -VolumeType ${ebstype} -AvailabilityZone $instAZ
-      }
+
+      switch ($vtype)
+         {
+            standard {
+                  $RecoveryEBSstruct = New-EC2Volume -SnapshotId $SnapShot -VolumeType ${vtype} -AvailabilityZone $instAZ
+               }
+            gp2      {
+                  $RecoveryEBSstruct = New-EC2Volume -SnapshotId $SnapShot -VolumeType ${vtype} -AvailabilityZone $instAZ
+               }
+            io1      {
+
+                  if ($iops -lt 100) {
+                     $(throw "Must pass a value between 100 and 20000 - and IO-to-Volsize ratio must be less than 30")
+                  } 
+
+                  $RecoveryEBSstruct = New-EC2Volume -SnapshotId $SnapShot -VolumeType ${vtype} -iops $iops -AvailabilityZone $instAZ
+               }
+            default  { $(throw "unsupported Volume-Type specified") }
+         }
+
       $RecoveryEBS = $RecoveryEBSstruct.VolumeId
 
       # Ensure we got an EBS volume-identifier
