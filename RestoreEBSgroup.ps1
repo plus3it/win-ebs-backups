@@ -28,7 +28,7 @@
 Param (
    [string]$snapgrp = $(throw "-snapgrp is required"),
    [string]$vtype = "standard",
-   [string]$iops = "100"
+   [int]$iops = 100
 )
 
 switch ($vtype)
@@ -37,6 +37,10 @@ switch ($vtype)
       gp2      { $ebstype = $vtype }
       io1      {
             $ebstype = $vtype
+            if (($iops -lt 100) -Or ($iops -gt 20000)) {
+               $(throw "Must pass a value between 100 and 20000")
+            }
+            
          }
       default  { $(throw "unsupported Volume-Type specified") }
    }
