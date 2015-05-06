@@ -27,14 +27,17 @@
 # Commandline arguments parsing
 Param (
    [string]$snapgrp = $(throw "-snapgrp is required"),
-   [string]$vtype = "standard"
+   [string]$vtype = "standard",
+   [string]$iops = "100"
 )
 
 switch ($vtype)
    {
       standard { $ebstype = $vtype }
       gp2      { $ebstype = $vtype }
-      io1      { $ebstype = $vtype }
+      io1      {
+            $ebstype = $vtype
+         }
       default  { $(throw "unsupported Volume-Type specified") }
    }
 
@@ -93,7 +96,11 @@ function SnapToEBS {
    # Iterate snapshot group
    foreach($SnapShot in $SnapList) {
       Write-Host "Attempting to create EBS from snapshot $SnapShot"
-      $RecoveryEBSstruct = New-EC2Volume -SnapshotId $SnapShot -VolumeType ${ebstype} -AvailabilityZone $instAZ
+      if ($ebstype = "io1") {
+         $RecoveryEBSstruct = New-EC2Volume -SnapshotId $SnapShot -VolumeType ${ebstype} -iops $iops -AvailabilityZone $instAZ
+      } else {
+         $RecoveryEBSstruct = New-EC2Volume -SnapshotId $SnapShot -VolumeType ${ebstype} -AvailabilityZone $instAZ
+      }
       $RecoveryEBS = $RecoveryEBSstruct.VolumeId
 
       # Ensure we got an EBS volume-identifier
