@@ -26,8 +26,17 @@
 
 # Commandline arguments parsing
 Param (
-   [string]$snapgrp = $(throw "-snapgrp is required")
+   [string]$snapgrp = $(throw "-snapgrp is required"),
+   [string]$vtype = "standard"
 )
+
+switch ($vtype)
+   {
+      standard { $ebstype = $vtype }
+      gp2      { $ebstype = $vtype }
+      io1      { $ebstype = $vtype }
+      default  { $(throw "unsupported Volume-Type specified") }
+   }
 
 # Set generic variables
 $DateStmp = $(get-date -format "yyyyMMddHHmm")
@@ -84,7 +93,7 @@ function SnapToEBS {
    # Iterate snapshot group
    foreach($SnapShot in $SnapList) {
       Write-Host "Attempting to create EBS from snapshot $SnapShot"
-      $RecoveryEBSstruct = New-EC2Volume -SnapshotId $SnapShot -VolumeType standard -AvailabilityZone $instAZ
+      $RecoveryEBSstruct = New-EC2Volume -SnapshotId $SnapShot -VolumeType ${ebstype} -AvailabilityZone $instAZ
       $RecoveryEBS = $RecoveryEBSstruct.VolumeId
 
       # Ensure we got an EBS volume-identifier
