@@ -1,8 +1,8 @@
 # This script is designed to restore an EBS or EBS-group using the 
-# value in the snapshots' "Name" tag:
-# * If the snapshots' "Name" tags are not set, this script will fail
+# value in the snapshots' "Snapshot Group" tag:
+# * If the snapshots' "Snapshot Group" tags are not set, this script will fail
 # * If the name-value passed to the script is not an exact-match for 
-#   any snapshots' "Name" tag, this script will fail
+#   any snapshots' "Snapshot Group" tag, this script will fail
 #
 # Note: this script assumes that you are attaching an EBS to an
 #       existing instance, either with the intention to recover 
@@ -15,8 +15,8 @@
 # - Generic: See the top-level README_dependencies.md for script dependencies
 # - Specific:
 #   * All snapshots - or groups of snapshots - to be restored via this
-#     script must have a unique "Name" tag (at least within the scope
-#     of an Amazon region). Non-unique "Name" tags will result in
+#     script must have a unique "Snapshot Group" tag (at least within the scope
+#     of an Amazon region). Non-unique "Snapshot Group" tags will result in
 #     collisions during restores
 #
 # License:
@@ -52,7 +52,7 @@ Set-DefaultAWSRegion $instRegion
 
 
 ##########
-# Get list of snspshots matching "Name"
+# Get list of snspshots matching "Snapshot Group"
 function GetSnapList {
    $SnapStruct =`Get-EC2Snapshot -Filter @(
                @{ Name="tag:Created By" ; Values="Automated Backup" }, `
