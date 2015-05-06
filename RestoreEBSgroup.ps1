@@ -37,8 +37,8 @@ switch ($vtype)
       gp2      { $ebstype = $vtype }
       io1      {
             $ebstype = $vtype
-            if (($iops -lt 100) -Or ($iops -gt 20000)) {
-               $(throw "Must pass a value between 100 and 20000")
+            if ($iops -lt 100) {
+               $(throw "Must pass a value between 100 and 20000 - and IO-to-Volsize ratio must be less than 30")
             }
             
          }
