@@ -44,3 +44,4 @@ Deleting snapshot: snap-223e2473...Success
 Deleting snapshot: snap-10d51b40...Success
 Deleting snapshot: snap-b30765e3...Success
 ~~~
+As shown above, the utility will locate all snapshots associated with the host. Snapshots that are older than the default or specified keep-horizon will be called out in the find-list and then deleted.
