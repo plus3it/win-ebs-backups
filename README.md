@@ -4,7 +4,7 @@ This project contains a collection of scripts designed to facilitate the creatio
 When used as intended, these utilities allow for easy creation and maintenance of  - and recovery from - EBS snapshots for server instances running on AWS.  
 
 ## Backups Using EBS Snapshots
-Backups are achieved by using the [SnapByCgroup.ps1] with the automated tasks scheduler. The automated tasks scheduler is used to automate the running of the SnapByCgroup tool to create EBS snapshots of hosted data at regular intervals.
+Backups are achieved by using the `SnapByCgroup.ps1` with the automated tasks scheduler. The automated tasks scheduler is used to automate the running of the SnapByCgroup tool to create EBS snapshots of hosted data at regular intervals.
 
 Example System: 
 * Windows Server 2012
