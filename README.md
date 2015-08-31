@@ -1,5 +1,5 @@
 # WinEBSbackups
-This project contains a collection of scripts designed to facilitate the creation of and recovery from EBS volume snapshots for Windows-based EC2 instances. These utilities are based on the work done for the [LxEBSbackups](https://github.com/ferricoxide/LxEBSbackups) project. These utilities are implemented in Windows PowerShell. However, due to limitations with Windows-based filesystems, lack features like filesystem quiescing and implementation of consistency-bropup functionality.
+This project contains a collection of scripts designed to facilitate the creation of and recovery from EBS volume snapshots for Windows-based EC2 instances. These utilities are based on the work done for the [LxEBSbackups](https://github.com/ferricoxide/LxEBSbackups) project. These utilities are implemented in Windows PowerShell. However, due to limitations with Windows-based filesystems, this tool-set lacks features like filesystem quiescing and implementation of consistency-bropup functionality.
 
 When used as intended, these utilities allow for easy creation and maintenance of  - and recovery from - EBS snapshots for server instances running on AWS.  
 
@@ -19,17 +19,15 @@ Example System:
 1. Tag each of the EBS volumes to snap with a tag named "Consistency Group". Volumes that should be snapped as a set should be given the same "Consistency Group" value; volumes taht should be snapped separately from each other should be given differing values. 
 
     ~~~
-key = Consistency Group #this is a required value, don't modify it
-value = MyGroup01 #name this whatever you want, whatever volumes share this value will be snapped together
+key   =   Consistency Group #this is a required value, don't modify it
+value =   MyGroup01 #name this whatever you want, whatever volumes share this value will be snapped together
     ~~~
 
 2. Retrieve the SnapByCgroup.ps1 tool. 
 
-    ~~~
     1. Open a command shell (`powershell.exe` preferred)
     2. Navigate to where you want your tools to live
-    3. Use your git client to copy down this repo (e.g., `git clone <url to git repo for WinEBSbackups>`
-    ~~~
+    3. Use your git client to copy down this repo (e.g., `git clone <url to git repo for WinEBSbackups>`).
 
 3. Test the script (from within PowerShell):
 
@@ -58,35 +56,27 @@ But wait, these things are really going to start piling up.  Fear not, read on..
 
 ## Backup Snapshot Maintenance
 
-The [maintenance script](README_MaintSnaps.sh.md) will comb through the snapshots for your instance and delete ones older than the number of days you specify.
+The [maintenance script](README_SnapMaint.md) will comb through the snapshots for your instance and delete ones older than the number of days you specify.
 
-But what if I have snapshots I created manually that I don't want deleted?  No problem, the script will only delete snapshots if the tags match those automatically set by the SnapByCgroup.sh script when run as a CRON job.  Your custom snapshots are safe.
 
 ### Prerequisites
 * You completed the procedure above to create the backup snapshots
 
 ### Procedure
 
-1. Set the how many days you want to retain snapshots in the [commonVars.env](README_commonVars.env.md) file.
+1. Set the how many days you want to retain snapshots in the `SnapMaint.ps1` utility's "Param" block. Modify the value of `$keepdays` to your desired value (seven days is the tool's default). 
 
 2. Test the script
 
     ~~~
-/root/LxEBSbackups/MaintSnaps.sh
+cd \PATH\TO\SNAPUTILS
+.\SnapMaint.ps1
+
 Beginning stale snapshot cleanup (killing files older than 2015/08/19 @ 18:25)
     ~~~
 
-4. Create a CRON job to delete old snapshots nightly at 5 AM
+4. Create a scheduled task to delete old snapshots nightly 
 
-    ~~~
-crontab -e
-    ~~~
-  
-  Add this line:
-
-    ~~~
-0 05 * * * /root/LxEBSbackups/MaintSnaps.sh
-    ~~~
 
 ### Result
 IF there were any snapshots created by SnapByCgroup.sh run via CRON older than the number of days you set in step 1, then they should now be gone under EC2>Snapshots.  Every morning at 5 AM, older snaps will be deleted.
