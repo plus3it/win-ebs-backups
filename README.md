@@ -87,4 +87,4 @@ Note: This script will NOT delete snapshots created when running SnapByCgroup.sh
 
 Uh oh.  Something went horribly wrong and you need to recover from one of the snapshots you've been keeping.  Fundamentally, you will be creating new EBS volumes from the snapshots and mounting them in order to recover files or whole instances.  
 
-There are many ways to "skin the cat".  You can perform recoveries manually using the AWS web console or you can use the RestoreEBSgroup.ps1 utility from this tool-set.
+There are many ways to "skin the cat".  You can perform recoveries manually using the AWS web console or you can use the `RestoreEBSgroup.ps1` utility from this tool-set.
