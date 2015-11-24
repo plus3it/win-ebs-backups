@@ -46,10 +46,11 @@ Tagging snapshot: snap-55555558
     1. Create Basic Task, apply a Name for the backup job task (ex. EBS Backup Task)
     2. Configure the task to utilize the "System" account
     3. Within the 'Start a Program' section, configure the following:
-        a. Type "Powershell.exe" in the Program/script column (ensure the "P" is capitalized) DO NOT USE THE BROWSE FUNCTION
+    
+      a. Type "Powershell.exe" in the Program/script column (ensure the "P" is capitalized) DO NOT USE THE BROWSE FUNCTION
         
-        b. ADD ARGUMENTS is not optional, type the full path of the script location and the name of the Consistency Group                within the Add Arguments column  
-           Ex. C:\SnapByCgroup\SnapByCgroup.ps1 BackupGroup01
+      b. ADD ARGUMENTS is not optional, type the full path of the script location and the name of the Consistency Group                within the Add Arguments column  
+         Ex. C:\SnapByCgroup\SnapByCgroup.ps1 BackupGroup01
            
     4. Once the task is created, execute a test Run
         
