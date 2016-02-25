@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/plus3it/WinEBSbackups.svg)](https://travis-ci.org/plus3it/WinEBSbackups)
+
 # WinEBSbackups
 This project contains a collection of scripts designed to facilitate the creation of and recovery from EBS volume snapshots for Windows-based EC2 instances. These utilities are based on the work done for the [LxEBSbackups](https://github.com/ferricoxide/LxEBSbackups) project. These utilities are implemented in Windows PowerShell. However, due to limitations with Windows-based filesystems, this tool-set lacks features like filesystem quiescing and implementation of consistency-bropup functionality.
 
