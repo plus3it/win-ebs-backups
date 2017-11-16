@@ -64,6 +64,6 @@ C:\MiscUtils\WinEBSbackups > .\SnapMaint.ps1 -keepdays 6 -snapgrp "Bogus Group"
 Nothing to delete: no snapshots older than keep-horizon
 ~~~
 As shown above, the utility will locate all snapshots associated with the host. Snapshots that are older than the default or specified keep-horizon will be called out in the find-list and then deleted:
-- The first example shows that, if there are now matches found that are older than the specified age, nothing is deleted.
+- The first example shows that, if there are no matches found that are older than the specified age, nothing is deleted.
 - The second examples shows a successful match for age and group-description substring.
-- The ghird example shows that there were no matches found. This will normally be the result if there are no snapshots for the calling host that match the passwd snapshot groupname string.
+- The third example shows that there were no matches found. This will normally be the result if there are no snapshots for the calling host that match the passwd snapshot groupname string.
