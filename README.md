@@ -41,7 +41,7 @@ Tagging snapshot: snap-55555557
 Tagging snapshot: snap-55555558
     ~~~
 
-4. Create a automated schedulure task to create snapshots via Task Scheduler nightly at 1 AM
+4. Create a automated scheduler task to create snapshots via Task Scheduler nightly at 1 AM
 
     1. Create Basic Task, apply a Name for the backup job task (ex. EBS Backup Task)
     2. Configure the task to utilize the "System" account
@@ -69,7 +69,7 @@ But wait, these things are really going to start piling up.  Fear not, read on..
 
 ## Backup Snapshot Maintenance
 
-The [maintenance script](README_SnapMaint.md) will comb through the snapshots for your instance and delete ones older than the number of days you specify.
+The [maintenance script](README_SnapMaint.md) will scan through the snapshots for your instance and delete ones older than the number of days you specify.
 
 
 ### Prerequisites
