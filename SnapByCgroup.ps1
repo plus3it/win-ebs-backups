@@ -27,6 +27,7 @@ param (
 
 # Look for EBSes with desired tag-value applied
 Function GetAttVolList {
+   
    $VolumeStruct = Get-EC2Volume -Filter @(
       @{ Name="attachment.instance-id"; Values="$instanceId" },
       @{ Name="tag:Consistency Group"; Values="$cgroup" } )
@@ -38,16 +39,41 @@ Function GetAttVolList {
 
 # Function to run Snapshot the targeted-volumes
 Function New-EbsSnapshot {
-    foreach ($SrcVolId in $VolumeList) {
-         $SnapIdStruct = New-EC2Snapshot -VolumeId $SrcVolId -Description ${BkupDesc}
-         $SnapId = $SnapIdStruct.SnapshotId
-         New-EC2Tag -Resource $SnapId -Tag @( @{ Key="Name"; Value="${BkupName}" }, `
-            @{ Key="Snapshot Group"; Value="$SnapGrpName" }, `
-            @{ Key="Created By"; Value="$CreateBy" }
-         )
+    $SnapMap = @{}
 
-         Write-Host "* Snapshot $SnapId in progres..."
-      }
+    # Set hostname tag-value
+    if ( $env:userdnsdomain ) {
+        $MyHostname = "$env:computername.$env:userdnsdomain"
+    } else {
+        $MyHostname = "$env:computername"
+    }
+
+    # Iterate volume-list and snap
+    foreach ($SrcVolId in $VolumeList) {
+        $SnapIdStruct = New-EC2Snapshot -VolumeId $SrcVolId -Description ${BkupDesc}
+        $SnapId = $SnapIdStruct.SnapshotId
+
+	# Create snapshot/source mapping
+	$SnapMap.Add($SnapId, $SrcVolId)
+
+	# Tell user what we've done
+        Write-Host "* Snapshot creating $SnapId from $SrcVolId..."
+    }
+
+    # Batch-tag the snapshots
+    write-output "Tagging snapshots... "
+    foreach ( $key in $SnapMap.keys ) {
+        $attachDev = ( Get-EC2Volume -VolumeId $SnapMap.$key ).Attachments.Device
+        New-EC2Tag -Resource $key -Tag @( @{ Key="Name"; Value="${BkupName}" }, `
+            @{ Key="Snapshot Group"; Value="$SnapGrpName" }, `
+            @{ Key="Created By"; Value="$CreateBy" }, `
+	    @{ Key="Source BlockDev"; Value="$attachDev" }, `
+	    @{ Key="Source Hostname"; Value="$MyHostname" }, `
+	    @{ Key="Source Instance"; Value="$instanceId" }
+	)
+    }
+    write-output "Done"
+
 }
 
 # Ensure necessary cmdlets are available
@@ -56,16 +82,13 @@ Import-Module "C:\Program Files (x86)\AWS Tools\PowerShell\AWSPowerShell\AWSPowe
 
 # Set generic variables
 $DateStmp = $(get-date -format "yyyyMMddHHmm")
-$instMetaRoot = "http://169.254.169.254/latest/"
 if ( ! $logDir ) {
     $logDir = "C:/TEMP/WinEBSbackups"
 }
 $LogFile = "${logDir}/backup-$DateStmp.log"
 
-# Capture instance identy "document" data
-$instanceJson = Invoke-RestMethod -Uri ${instMetaRoot}/dynamic/instance-identity/document/
-
 # Set up search-related vars
+$instanceJson = Get-Ec2InstanceMetadata -category identitydocument | ConvertFrom-Json
 $awsRegion = $instanceJson.region
 $instanceId = $instanceJson.instanceId
 
