@@ -67,9 +67,10 @@ Function New-EbsSnapshot {
         New-EC2Tag -Resource $key -Tag @( @{ Key="Name"; Value="${BkupName}" }, `
             @{ Key="Snapshot Group"; Value="$SnapGrpName" }, `
             @{ Key="Created By"; Value="$CreateBy" }, `
-	    @{ Key="Source BlockDev"; Value="$attachDev" }, `
-	    @{ Key="Source Hostname"; Value="$MyHostname" }, `
-	    @{ Key="Source Instance"; Value="$instanceId" }
+	    @{ Key="Original Attachment"; Value="$attachDev" }, `
+	    @{ Key="Original AZ"; Value="$instanceAz" }, `
+	    @{ Key="Original Hostname"; Value="$MyHostname" }, `
+	    @{ Key="Original Instance"; Value="$instanceId" }
 	)
     }
     write-output "Done"
@@ -91,6 +92,7 @@ $LogFile = "${logDir}/backup-$DateStmp.log"
 $instanceJson = Get-Ec2InstanceMetadata -category identitydocument | ConvertFrom-Json
 $awsRegion = $instanceJson.region
 $instanceId = $instanceJson.instanceId
+$instanceAz = $instanceJson.availabilityZone
 
 # Set basic snapshot description
 $BkupDesc = "${InstanceId}-bkup-${DateStmp}"
