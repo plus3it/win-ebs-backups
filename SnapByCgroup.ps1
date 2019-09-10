@@ -1,71 +1,44 @@
-# This script is designed to perform consistent backups of
-# - Selected EBS volumes (referenced by "Consistency Group"
-#   AWS object-tag)
-# - Mounted filesystems (referenced by Windows drive-letter
-#   or fully-qualified directory-path)
+# About:
+#   This script is designed to find a targeted-set EBS volumes attached to 
+#   the instance and request the creation of EBS snapshots.
 #
-#
-# Dependencies:
-# - Generic: See the top-level README_dependencies.md file for
-#   a full list of script dependencies
+#   Targeting is done by scanning all locally-attached EBS volumes and 
+#   looking for a 'Consistency Group' tag. The value of this tag is then 
+#   matched against the script's 'cgroup' parameter. Any volumes that have 
+#   matching tags are then snapshotted. done by scanning all 
+#   locally-attached EBS volumes and looking for a 'Consistency Group' tag. 
+#   The value of this tag is then matched against the script's 'cgroup' 
+#   parameter. Any volumes that have matching tags are then snapshotted.
 #
 # License:
-# - This script released under the Apache 2.0 OSS License
+#   This script released under the Apache 2.0 OSS License
 #
-######################################################################
-
-# Commandline arguments parsing
-Param (
-   [string]$congrp = $(throw "-congrp is required")
+###########################################################################
+param (
+    [Parameter(
+        Mandatory=$true,
+	HelpMessage="Please enter the 'Consistency Group' tag-value to target"
+     )][string]$cgroup = $(throw "-cgroup is required"),
+    [Parameter(
+        Mandatory=$false,
+        HelpMessage="Path to write log-files"
+     )][string]$logDir
 )
 
-# Set generic variables
-$DateStmp = $(get-date -format "yyyyMMddHHmm")
-$LogDir = "C:/TEMP/EBSbackup"
-$LogFile = "${LogDir}/backup-$DateStmp.log"
-$instMetaRoot = "http://169.254.169.254/latest/"
+# Look for EBSes with desired tag-value applied
+Function GetAttVolList {
+   $VolumeStruct = Get-EC2Volume -Filter @(
+      @{ Name="attachment.instance-id"; Values="$instanceId" },
+      @{ Name="tag:Consistency Group"; Values="$cgroup" } )
 
-# Make sure AWS cmdlets are available
-Import-Module "C:\Program Files (x86)\AWS Tools\PowerShell\AWSPowerShell\AWSPowerShell.psd1"
+   # Extract VolumeIDs from $VolumeStruct
+   $global:VolumeList = $VolumeStruct.VolumeId
 
+}
 
-# Capture instance identy "document" data
-$docStruct = Invoke-RestMethod -Uri ${instMetaRoot}/dynamic/instance-identity/document/
-
-# Extract info from $docStruct
-$instRegion = $docStruct.region
-$instId = $docStruct.instanceId
-
-# Set basic snapshot description
-$BkupDesc = "${instId}-bkup-${DateStmp}"
-$BkupName = "AutoBack (${instId}) ${DateStmp}"
-$SnapGrpName = "${DateStmp} (${instId}) ${congrp}"
-$CreateBy = "Automated Backup"
-
-# Set AWS region fo subsequent AWS cmdlets
-Set-DefaultAWSRegion $instRegion
-
-
-
-# Function to run Snapshots in parallel
+# Function to run Snapshot the targeted-volumes
 Function New-EbsSnapshot {
-   [CmdLetBinding()]
-
-   Param(
-      # Placeholder
-   )
-
-   BEGIN {
-      # Things that don't change, just do once
-   }
-
-   PROCESS {
-
-      ##########################################
-      ## THIS METHOD CURRENTLY SERIAL - WILL  ##
-      ## CHANGE TO PARALLEL IN LATER VERSIONS ##
-      ##########################################
-      foreach ($SrcVolId in $VolumeList) {
+    foreach ($SrcVolId in $VolumeList) {
          $SnapIdStruct = New-EC2Snapshot -VolumeId $SrcVolId -Description ${BkupDesc}
          $SnapId = $SnapIdStruct.SnapshotId
          New-EC2Tag -Resource $SnapId -Tag @( @{ Key="Name"; Value="${BkupName}" }, `
@@ -73,31 +46,57 @@ Function New-EbsSnapshot {
             @{ Key="Created By"; Value="$CreateBy" }
          )
 
-         Write-Host $SnapId
+         Write-Host "* Snapshot $SnapId in progres..."
       }
-      ##########################################
-      ##########################################
-   }
-
-   END {
-      # Placeholder
-   }
-   
 }
 
+# Ensure necessary cmdlets are available
+write-output 'Importing command-dependencies...'
+Import-Module "C:\Program Files (x86)\AWS Tools\PowerShell\AWSPowerShell\AWSPowerShell.psd1"
 
-# Grab all volumes owned by instance and are part of selected consistency group
-Function GetAttVolList {
-   $VolumeStruct = Get-EC2Volume -Filter @(
-      @{ Name="attachment.instance-id"; Values="$instId" },
-      @{ Name="tag:Consistency Group"; Values="$congrp" } )
+# Set generic variables
+$DateStmp = $(get-date -format "yyyyMMddHHmm")
+$instMetaRoot = "http://169.254.169.254/latest/"
+if ( ! $logDir ) {
+    $logDir = "C:/TEMP/WinEBSbackups"
+}
+$LogFile = "${logDir}/backup-$DateStmp.log"
 
-   # Extract VolumeIDs from $VolumeStruct
-   $global:VolumeList = $VolumeStruct.VolumeId
+# Capture instance identy "document" data
+$instanceJson = Invoke-RestMethod -Uri ${instMetaRoot}/dynamic/instance-identity/document/
 
+# Set up search-related vars
+$awsRegion = $instanceJson.region
+$instanceId = $instanceJson.instanceId
+
+# Set basic snapshot description
+$BkupDesc = "${InstanceId}-bkup-${DateStmp}"
+$BkupName = "AutoBack (${InstanceId}) ${DateStmp}"
+$SnapGrpName = "${DateStmp} (${InstanceId}) ${congrp}"
+$CreateBy = "Automated Backup"
+
+# Ensure log-directory exists
+if ( ! ( test-path $logDir ) )
+{
+    write-output "Attempting to create $logDir... "
+    New-Item -ItemType Directory -Force -Path $logDir
 }
 
-
+# Identify candidate EBSes to snap
 GetAttVolList
-New-EbsSnapshot
 
+# Take appropriate action
+if ($VolumeList) {
+   # Output list of snap-targets
+   write-output "`nFound targeted-volumes:"
+   foreach ( $volume in $VolumeList ) {
+      write-output "* $volume"
+   }
+
+   write-output "`nRequesting snapshots..."
+
+   # Request snapshots
+   New-EbsSnapshot
+} else {
+   write-output "`nFound no tagged EBS volume(s) with 'Consistency Group' tag-value of '$cgroup'"
+}
